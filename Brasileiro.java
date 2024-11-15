@@ -1,8 +1,8 @@
 public class Brasileiro extends Ciclista {
     private String cpf;
 
-    public Brasileiro(String cpf, String email, String senha, String nome) {
-        super(email, senha, nome);
+    public Brasileiro(String cpf, String email, String senha, String nome, CartaoCredito cartaoCredito) {
+        super(email, senha, nome, cartaoCredito);
         this.cpf = cpf;
     }
 

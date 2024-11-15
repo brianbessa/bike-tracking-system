@@ -2,11 +2,14 @@ public abstract class Ciclista {
     private String email;
     private String senha;
     private String nome;
+    private CartaoCredito cartaoCredito;
+    private Bicicleta bicicletaAlugada;
 
-    public Ciclista(String email, String senha, String nome) {
+    public Ciclista(String email, String senha, String nome, CartaoCredito cartaoCredito) {
         this.email = email;
         this.senha = senha;
         this.nome = nome;
+        this.cartaoCredito = cartaoCredito;
     }
 
     public String getEmail() {
@@ -21,6 +24,10 @@ public abstract class Ciclista {
         return nome;
     }
 
+    public CartaoCredito getCartaoCredito() {
+        return cartaoCredito;
+    }
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -31,5 +38,13 @@ public abstract class Ciclista {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public Bicicleta getBicicletaAlugada() {
+        return bicicletaAlugada;
+    }
+
+    public void setBicicletaAlugada(Bicicleta bicicletaAlugada) {
+        this.bicicletaAlugada = bicicletaAlugada;
     }
 }
