@@ -14,10 +14,6 @@ public class SistemaCadastro {
         return ciclistas;
     }
 
-    public void enviarMensagem(String email, String mensagem) {
-        System.out.println("Mensagem para " + email + ": " + mensagem);
-    }
-
     public void cadastrarBrasileiro(String cpf, String email, String senha, String nome, CartaoCredito cartaoCredito) {
         Brasileiro brasileiro = new Brasileiro(cpf, email, senha, nome, cartaoCredito);
         ciclistas.add(brasileiro);
@@ -31,8 +27,15 @@ public class SistemaCadastro {
     }
 
     public void cadastrarBicicleta(int numero) {
+        for (Bicicleta bicicleta : bicicletas) {
+            if (bicicleta.getNumero() == numero) {
+                System.out.println("Erro: Já existe uma bicicleta cadastrada com o número " + numero + ".");
+                return;
+            }
+        }
+        
         bicicletas.add(new Bicicleta(numero));
-        System.out.println("Bicicleta número " + numero + " cadastrada.");
+        System.out.println("Bicicleta número " + numero + " cadastrada com sucesso.");
     }
 
     public void listarCiclistas() {
@@ -49,17 +52,17 @@ public class SistemaCadastro {
                 break;
             }
         }
-
+    
         if (ciclista == null) {
             System.out.println("Ciclista não encontrado.");
             return;
         }
-
+    
         if (ciclista.getBicicletaAlugada() != null) {
             System.out.println("O ciclista já possui uma bicicleta alugada e não pode alugar outra.");
             return;
         }
-
+    
         Bicicleta bicicleta = null;
         for (Bicicleta b : bicicletas) {
             if (b.getNumero() == numero && b.getDisponivel()) {
@@ -67,107 +70,104 @@ public class SistemaCadastro {
                 break;
             }
         }
-
+    
         if (bicicleta == null) {
             System.out.println("Bicicleta não encontrada.");
             return;
         }
-
+    
         boolean pagamentoSucesso = ciclista.getCartaoCredito().cobrar(TAXA_BASICA);
-
+    
         if (pagamentoSucesso) {
             bicicleta.setDisponivel(false);
             bicicleta.setCiclistaAtual(ciclista);
             bicicleta.setHoraAluguel(horaAluguel);
-            ciclista.setBicicletaAlugada(bicicleta); // Associar o ciclista à bicicleta
+            ciclista.setBicicletaAlugada(bicicleta);
             System.out.println("Bicicleta número " + numero + " alugada para " + ciclista.getNome());
-
-            String mensagem = "Você alugou a bicicleta número " + numero + " às " + horaAluguel + ".";
+    
+            String mensagem = ciclista.getNome() +
+                    " alugou a bicicleta número " + numero + " às " + horaAluguel + ".\n" +
+                    "Valor cobrado: R$" + TAXA_BASICA;
             enviarMensagem(email, mensagem);
         } else {
             System.out.println("Aluguel da bicicleta não efetuado.");
         }
+    }    
 
-    }
-
-    public void devolverBicicleta(int numero, float valor, int numeroTranca, String dataHora, int duracaoMinutos) {
-        Bicicleta bicicleta = null;
-        Tranca trancaEscolhida = null;
-    
-        // Encontrar a bicicleta
-        for (Bicicleta b : bicicletas) {
-            if (b.getNumero() == numero && !b.getDisponivel()) {
-                bicicleta = b;
-                break;
-            }
-        }
-    
-        if (bicicleta == null) {
-            System.out.println("Erro: Bicicleta número " + numero + " não encontrada ou já está disponível.");
-            return;
-        }
-    
-        // Encontrar a tranca
-        for (Totem totem : totems) {
-            for (Tranca tranca : totem.getTrancas()) {
-                if (tranca.getTranca() == numeroTranca) {
-                    trancaEscolhida = tranca;
+    public void devolverBicicleta(int numeroBicicleta, int numeroTranca, String horarioDevolucao, int duracaoMinutos) {
+        try {
+            Bicicleta bicicleta = null;
+            for (Bicicleta b : bicicletas) {
+                if (b.getNumero() == numeroBicicleta && !b.getDisponivel()) {
+                    bicicleta = b;
                     break;
                 }
             }
-            if (trancaEscolhida != null) break;
-        }
     
-        if (trancaEscolhida == null) {
-            System.out.println("Erro: Tranca número " + numeroTranca + " não encontrada.");
-            return;
-        }
-    
-        if (!trancaEscolhida.getDisponivel()) {
-            System.out.println("Erro: Tranca número " + numeroTranca + " já está ocupada.");
-            return;
-        }
-    
-        // Calcular valor extra
-        int minutosMais = duracaoMinutos - 120;
-        float valorExtra = 0;
-        if (minutosMais > 0) {
-            int periodosExtras = (int) Math.ceil(minutosMais / 30.0);
-            valorExtra = periodosExtras * TAXA_EXTRA;
-        }
-    
-        // Verificar ciclista associado à bicicleta
-        Ciclista ciclistaAtual = bicicleta.getCiclistaAtual();
-        if (ciclistaAtual == null) {
-            System.out.println("Erro: Nenhum ciclista associado à bicicleta.");
-            return;
-        }
-    
-        // Cobrar taxa extra, se aplicável
-        if (valorExtra > 0) {
-            boolean pagamentoExtraSucesso = ciclistaAtual.getCartaoCredito().cobrar(valorExtra);
-            if (!pagamentoExtraSucesso) {
-                System.out.println("Falha na cobrança da taxa extra. A devolução será processada, mas o valor permanecerá pendente.");
+            if (bicicleta == null) {
+                System.out.println("Bicicleta número " + numeroBicicleta + " não está alugada ou não existe.");
+                return;
             }
-        }
     
-        // Registrar devolução
-        Devolucao devolucao = new Devolucao(bicicleta, valor + valorExtra, dataHora);
-        devolucoes.add(devolucao);
+            Tranca tranca = null;
+            for (Totem totem : totems) {
+                for (Tranca t : totem.getTrancas()) {
+                    if (t.getTranca() == numeroTranca && t.getDisponivel()) {
+                        tranca = t;
+                        break;
+                    }
+                }
+                if (tranca != null) break;
+            }
     
-        // Atualizar disponibilidade
-        trancaEscolhida.setDisponivel(false);
-        bicicleta.setDisponivel(true);
-        bicicleta.setCiclistaAtual(null);
-        ciclistaAtual.setBicicletaAlugada(null);
+            if (tranca == null) {
+                System.out.println("Tranca número " + numeroTranca + " não está disponível ou não existe.");
+                return;
+            }
     
-        System.out.println("Bicicleta " + numero + " devolvida com sucesso na tranca " + numeroTranca + ".");
-    }    
+            int minutosExcedentes = duracaoMinutos - 120;
+            float valorExtra = 0;
+            if (minutosExcedentes > 0) {
+                int periodosExtras = (int) Math.ceil(minutosExcedentes / 30.0);
+                valorExtra = periodosExtras * TAXA_EXTRA;
+            }
 
+            boolean pagamentoSucesso = bicicleta.getCiclistaAtual().getCartaoCredito().cobrar(valorExtra);
+            if (!pagamentoSucesso) {
+                System.out.println("Cobrança do valor extra falhou. A devolução será concluída, mas o valor deve ser regularizado.");
+                registrarFalhaCobranca(bicicleta.getCiclistaAtual(), valorExtra);  
+            }
+    
+            bicicleta.setDisponivel(true);
+    
+            Ciclista ciclista = bicicleta.getCiclistaAtual();
+            if (ciclista != null) {
+                ciclista.devolverBicicleta();
+                bicicleta.setCiclistaAtual(null);
+            }
+    
+            tranca.setDisponivel(false);
+    
+            Devolucao devolucao = new Devolucao(bicicleta, valorExtra, horarioDevolucao);
+            devolucoes.add(devolucao);
+    
+            System.out.println("Bicicleta número " + numeroBicicleta + " devolvida com sucesso na tranca " + numeroTranca + ".");
+            if (valorExtra > 0) {
+                System.out.println("Valor extra pela devolução atrasada: R$" + valorExtra);
+            }
+        } catch (Exception e) {
+            System.out.println("Erro inesperado ao processar devolução: " + e.getMessage());
+        }
+    }     
+
+    private void registrarFalhaCobranca(Ciclista ciclista, double valorExtra) {
+        System.out.println("Registro de falha: Ciclista " + ciclista.getNome() + 
+                           " - Valor pendente: R$" + valorExtra);
+    }
+    
     public void alterarDadosCiclista(String email, String novoNome, String novaSenha) {
         Ciclista ciclista = null;
 
-        // Buscar ciclista pelo e-mail
         for (Ciclista c : ciclistas) {
             if (c.getEmail().equals(email)) {
                 ciclista = c;
@@ -180,7 +180,6 @@ public class SistemaCadastro {
             return;
         }
 
-        // Alterar os dados do ciclista
         if (novoNome != null && !novoNome.isEmpty()) {
             ciclista.setNome(novoNome);
         }
@@ -191,9 +190,14 @@ public class SistemaCadastro {
         System.out.println("Dados do ciclista atualizados com sucesso.");
     }
 
+    public void enviarMensagem(String email, String mensagem) {
+        System.out.println("Mensagem enviada para " + email + ":");
+        System.out.println(mensagem);
+        System.out.println();
+    }
+
     public void adicionarTotem(Totem totem){
         totems.add(totem);
-
     }
 
 }

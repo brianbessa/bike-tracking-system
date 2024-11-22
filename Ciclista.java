@@ -12,6 +12,18 @@ public abstract class Ciclista {
         this.cartaoCredito = cartaoCredito;
     }
 
+    public void alugarBicicleta(Bicicleta bicicleta) {
+        this.bicicletaAlugada = bicicleta;
+    }
+
+    public void devolverBicicleta() {
+        this.bicicletaAlugada = null;
+    }
+
+    public boolean possuiBicicletaAlugada() {
+        return this.bicicletaAlugada != null;
+    }
+
     public String getEmail() {
         return email;
     }
